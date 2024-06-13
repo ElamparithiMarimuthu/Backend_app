@@ -20,6 +20,6 @@ jobs:
           password: ${{ secrets.PASSWD }}
           port: ${{ secrets.PORT }}
           script: |
-            cd backend/Backend_app
+            cd Backend_app
             git pull
             
