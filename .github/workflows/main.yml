@@ -29,7 +29,7 @@ jobs:
       run: unzip awscliv2.zip
 
     - name: Install AWS CLI
-      run: sudo ./aws/install
+      run: sudo ./aws/install --update
 
     - name: Verify AWS CLI installation
       run: aws --version
