@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Deploy to Development Server
 
 on:
   push:
@@ -7,46 +7,72 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Get Github action IP
-        id: ip
-        uses: ElamparithiMarimuthu/Backend_app@v1.2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Setting environment variables
-        run: |
-          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "AWS_SG_NAME=launch-wizard-68" >> $GITHUB_ENV
-          echo "AWS_SG_ID=sg-0d572d49cd9afca78" >> $GITHUB_ENV
+    - name: Update package lists
+      run: sudo apt-get update
 
-      - name: Add GitHub Actions IP to Security Group
-        run: |
-          aws ec2 authorize-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.runner_ip }}/32
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Install zip and unzip
+      run: sudo apt-get install zip unzip -y
 
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Install curl
+      run: sudo apt-get install curl -y
 
-      - name: Pull the repo
-        uses: appleboy/ssh-action@v0.1.2
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWD }}
-          port: ${{ secrets.PORT }}
-          script: |
-            cd /opt/nodejs/Backend_app
-            git pull
+    - name: Download AWS CLI v2
+      run: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 
-      - name: Remove GitHub Actions IP from Security Group
-        run: |
-          aws ec2 revoke-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.runner_ip }}/32
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+    - name: Unzip AWS CLI
+      run: unzip awscliv2.zip
+
+    - name: Install AWS CLI
+      run: sudo ./aws/install
+
+    - name: Verify AWS CLI installation
+      run: aws --version
+
+    - name: Configure AWS credentials
+      run: |
+        mkdir -p /root/.aws
+        echo "[default]" > /root/.aws/credentials
+        echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> /root/.aws/credentials
+        echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> /root/.aws/credentials
+        echo "[default]" > /root/.aws/config
+        echo "region = ${{ secrets.AWS_DEFAULT_REGION }}" >> /root/.aws/config
+
+    - name: Get public IP
+      id: get_ip
+      run: echo "::set-output name=ip::$(curl ifconfig.me)"
+
+    - name: Whitelist inbound rule in security group
+      run: |
+        IP=${{ steps.get_ip.outputs.ip }}
+        aws ec2 authorize-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+
+    - name: Run SSH commands on remote server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        port: ${{ secrets.PORT }}
+        key: ${{ secrets.PASSWD }}
+        script: |
+          cd /opt/nodejs/Backend_app
+          git pull
+        
+
+    - name: Remove inbound rule in security group
+      run: |
+        IP=${{ steps.get_ip.outputs.ip }}
+        aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+
+    - name: Clean up AWS credentials
+      run: rm -rf /root/.aws
+
+    - name: Deployment complete message
+      run: echo "Deployment Completed Please Check The Deployed Changes On Development Server !!!!!"
 
     
