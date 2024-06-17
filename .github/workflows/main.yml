@@ -9,10 +9,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+ jobs:
+  deploy:
+    runs-on: ubuntu-18.04
     steps:
-      - name: Get GitHub Actions Runner IP
-        id: ip
-        run: echo "::set-output name=runner_ip::$(curl -sS https://api.github.com/meta | jq -r '.actions[]')"
+    - name: Get Github action IP
+      id: ip
+      uses: ElamparithiMarimuthu/Backend_app@v1.2
+
 
       - name: Setting environment variables
         run: |
@@ -31,7 +35,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Node.js Deployment
+      - name: pull the repo
         uses: appleboy/ssh-action@v0.1.2
         with:
           host: ${{ secrets.HOST }}
@@ -50,5 +54,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
         if: always()
-
 
