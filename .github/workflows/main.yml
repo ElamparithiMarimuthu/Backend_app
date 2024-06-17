@@ -36,16 +36,16 @@ jobs:
 
     - name: Configure AWS credentials
       run: |
-        mkdir -p /root/.aws
-        echo "[default]" > /root/.aws/credentials
-        echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> /root/.aws/credentials
-        echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> /root/.aws/credentials
-        echo "[default]" > /root/.aws/config
-        echo "region = ${{ secrets.AWS_DEFAULT_REGION }}" >> /root/.aws/config
+        mkdir -p ~/.aws
+        echo "[default]" > ~/.aws/credentials
+        echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+        echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+        echo "[default]" > ~/.aws/config
+        echo "region = ${{ secrets.AWS_DEFAULT_REGION }}" >> ~/.aws/config
 
     - name: Get public IP
       id: get_ip
-      run: echo "::set-output name=ip::$(curl ifconfig.me)"
+      run: echo "::set-output name=ip::$(curl -s ifconfig.me)"
 
     - name: Whitelist inbound rule in security group
       run: |
@@ -58,11 +58,10 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         port: ${{ secrets.PORT }}
-        key: ${{ secrets.PASSWD }}
+        password: ${{ secrets.PASSWD }}
         script: |
           cd /opt/nodejs/Backend_app
           git pull
-        
 
     - name: Remove inbound rule in security group
       run: |
@@ -70,9 +69,8 @@ jobs:
         aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
 
     - name: Clean up AWS credentials
-      run: rm -rf /root/.aws
+      run: rm -rf ~/.aws
 
     - name: Deployment complete message
-      run: echo "Deployment Completed Please Check The Deployed Changes On Development Server !!!!!"
+      run: echo "Deployment Completed. Please check the deployed changes on the development server!"
 
-    
