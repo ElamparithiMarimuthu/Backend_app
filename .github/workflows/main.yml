@@ -1,18 +1,36 @@
-
-name: LawnShark-App
+name: Deploy to Production
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  LawnShark-App:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Get GitHub Actions IP
+        id: ip
+        uses: ElamparithiMarimuthu/public-ip@v1.2
+
+      - name: Setting environment variables
+        run: |
+          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "AWS_SG_NAME=sg-0d572d49cd9afca78" >> $GITHUB_ENV
+
+      - name: Add GitHub Actions IP to Security Group
+        run: |
+          aws ec2 authorize-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: LawnShark-App-Deployment
+      - name: Node.js Deployment
         uses: appleboy/ssh-action@v0.1.2
         with:
           host: ${{ secrets.HOST }}
@@ -20,6 +38,16 @@ jobs:
           password: ${{ secrets.PASSWD }}
           port: ${{ secrets.PORT }}
           script: |
-            cd Backend_app
+            cd /opt/nodejs/Backend_app
             git pull
+
+      - name: Remove GitHub Actions IP from Security Group
+        run: |
+          aws ec2 revoke-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+        if: always()
+
             
