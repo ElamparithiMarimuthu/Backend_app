@@ -17,11 +17,13 @@ jobs:
       - name: Setting environment variables
         run: |
           echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-          echo "AWS_SG_NAME=sg-0d572d49cd9afca78" >> $GITHUB_ENV
+          echo "AWS_SG_NAME=launch-wizard-68" >> $GITHUB_ENV
+          echo "AWS_SG_ID=sg-0d572d49cd9afca78" >> $GITHUB_ENV
+          echo "AWS_VPC_ID=vpc-03887ced8607a393a" >> $GITHUB_ENV  # Specify your VPC ID here
 
       - name: Add GitHub Actions IP to Security Group
         run: |
-          aws ec2 authorize-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.runner_ip }}/32
+          aws ec2 authorize-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.runner_ip }}/32 --vpc-id ${{ env.AWS_VPC_ID }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -43,7 +45,7 @@ jobs:
 
       - name: Remove GitHub Actions IP from Security Group
         run: |
-          aws ec2 revoke-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.runner_ip }}/32
+          aws ec2 revoke-security-group-ingress --group-name ${{ env.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.runner_ip }}/32 --vpc-id ${{ env.AWS_VPC_ID }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
