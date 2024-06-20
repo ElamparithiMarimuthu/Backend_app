@@ -60,7 +60,7 @@ jobs:
           port: ${{ secrets.PORT }}
           password: ${{ secrets.PASSWD }}
           script: |
-            cd /opt/nodejs/Backend_apps
+            cd /opt/nodejs/Backend_app
             git pull
 
       - name: Remove inbound rule in security group
@@ -68,7 +68,7 @@ jobs:
         run: |
           IP=${{ steps.get_ip.outputs.ip }}
           echo "Removing ${IP}/32 from security group launch-wizard-68"
-          aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+          aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32 || true
 
       - name: Clean up AWS credentials
         run: rm -rf ~/.aws
