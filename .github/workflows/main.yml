@@ -10,70 +10,75 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Update package lists
-      run: sudo apt-get update
+      - name: Update package lists
+        run: sudo apt-get update
 
-    - name: Install zip and unzip
-      run: sudo apt-get install zip unzip -y
+      - name: Install zip and unzip
+        run: sudo apt-get install zip unzip -y
 
-    - name: Install curl
-      run: sudo apt-get install curl -y
+      - name: Install curl
+        run: sudo apt-get install curl -y
 
-    - name: Download AWS CLI v2
-      run: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - name: Download AWS CLI v2
+        run: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 
-    - name: Unzip AWS CLI
-      run: unzip awscliv2.zip 
+      - name: Unzip AWS CLI
+        run: unzip awscliv2.zip
 
-    - name: Install AWS CLI
-      run: sudo ./aws/install --update
+      - name: Install AWS CLI
+        run: sudo ./aws/install --update
 
-    - name: Verify AWS CLI installation
-      run: aws --version
+      - name: Verify AWS CLI installation
+        run: aws --version
 
-    - name: Configure AWS credentials
-      run: |
-        mkdir -p ~/.aws
-        echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-        echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
-        echo "[default]" > ~/.aws/config
-        echo "region = ${{ secrets.AWS_DEFAULT_REGION }}" >> ~/.aws/config
+      - name: Configure AWS credentials
+        run: |
+          mkdir -p ~/.aws
+          echo "[default]" > ~/.aws/credentials
+          echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+          echo "[default]" > ~/.aws/config
+          echo "region = ${{ secrets.AWS_DEFAULT_REGION }}" >> ~/.aws/config
 
-    - name: Get public IP
-      id: get_ip
-      run: echo "::set-output name=ip::$(curl -s ifconfig.me)"
+      - name: Get public IP
+        id: get_ip
+        run: echo "::set-output name=ip::$(curl -s ifconfig.me)"
 
-    - name: Whitelist inbound rule in security group
-      run: |
-        IP=${{ steps.get_ip.outputs.ip }}
-        echo "Authorizing ${IP}/32 in security group launch-wizard-68"
-        aws ec2 authorize-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+      - name: Whitelist inbound rule in security group
+        run: |
+          IP=${{ steps.get_ip.outputs.ip }}
+          echo "Authorizing ${IP}/32 in security group launch-wizard-68"
+          aws ec2 authorize-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+          # Add debug output to verify the rule was applied
+          aws ec2 describe-security-groups --group-names launch-wizard-68
 
-    - name: Run SSH commands on remote server
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        port: ${{ secrets.PORT }}
-        password: ${{ secrets.PASSWD }}
-        script: |
-          cd /opt/nodejs/Backend_app
-          git pull
+      - name: Run SSH commands on remote server
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          password: ${{ secrets.PASSWD }}
+          script: |
+            cd /opt/nodejs/Backend_app
+            git pull
 
-    - name: Remove inbound rule in security group
-      run: |
-        IP=${{ steps.get_ip.outputs.ip }}
-        echo "Revoking ${IP}/32 from security group launch-wizard-68"
-        aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+      - name: Remove inbound rule in security group
+        run: |
+          IP=${{ steps.get_ip.outputs.ip }}
+          echo "Revoking ${IP}/32 from security group launch-wizard-68"
+          aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+          # Add debug output to verify the rule was revoked
+          aws ec2 describe-security-groups --group-names launch-wizard-68
 
-    - name: Clean up AWS credentials
-      run: rm -rf ~/.aws
+      - name: Clean up AWS credentials
+        run: rm -rf ~/.aws
 
-    - name: Deployment complete message
-      run: echo "Deployment Completed. Please check the deployed changes on the development server!"
+      - name: Deployment complete message
+        run: echo "Deployment Completed. Please check the deployed changes on the development server!"
+
 
 
