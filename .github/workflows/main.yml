@@ -74,6 +74,6 @@ jobs:
         run: rm -rf ~/.aws
 
       - name: Deployment complete message
-        run: echo "Deployment Completed. Please check the deployed changes on the development server!"
+        run: echo "Deployment Completed. Please check the deployed changes on the development server!" 
 
 
