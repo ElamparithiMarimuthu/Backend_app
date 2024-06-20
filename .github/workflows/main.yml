@@ -52,7 +52,7 @@ jobs:
           IP=${{ steps.get_ip.outputs.ip }}
           echo "Authorizing ${IP}/32 in security group launch-wizard-68"
           aws ec2 authorize-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
-          # Add debug output to verify the rule was applied
+          # Debug command to verify the rule was applied
           aws ec2 describe-security-groups --group-names launch-wizard-68
 
       - name: Run SSH commands on remote server
@@ -71,7 +71,7 @@ jobs:
           IP=${{ steps.get_ip.outputs.ip }}
           echo "Revoking ${IP}/32 from security group launch-wizard-68"
           aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
-          # Add debug output to verify the rule was revoked
+          # Debug command to verify the rule was revoked
           aws ec2 describe-security-groups --group-names launch-wizard-68
 
       - name: Clean up AWS credentials
@@ -79,6 +79,9 @@ jobs:
 
       - name: Deployment complete message
         run: echo "Deployment Completed. Please check the deployed changes on the development server!"
+
+ 
+
 
 
 
