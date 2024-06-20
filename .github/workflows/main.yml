@@ -47,7 +47,7 @@ jobs:
         id: get_ip
         run: echo "::set-output name=ip::$(curl -s ifconfig.me)"
 
-      - name: Whitelist inbound rule in security group
+      - name: Whitelist inbound rule in security groups
         run: |
           IP=${{ steps.get_ip.outputs.ip }}
           echo "Authorizing ${IP}/32 in security group launch-wizard-68"
