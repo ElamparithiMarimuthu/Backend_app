@@ -60,7 +60,7 @@ jobs:
         port: ${{ secrets.PORT }}
         password: ${{ secrets.PASSWD }}
         script: |
-          cd /opt/nodejs/Backend_app
+          cd /opt/nodejs/Backend_apps
           git pull
 
     - name: Remove inbound rule in security group
