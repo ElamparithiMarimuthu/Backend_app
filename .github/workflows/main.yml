@@ -50,7 +50,7 @@ jobs:
     - name: Whitelist inbound rule in security group
       run: |
         IP=${{ steps.get_ip.outputs.ip }}
-        aws ec2 authorize-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+        aws ec2 authorize-security-group-ingress --group-id sg-0d572d49cd9afca78 --protocol tcp --port 22 --cidr ${IP}/32
 
     - name: Run SSH commands on remote server
       uses: appleboy/ssh-action@v0.1.5
@@ -60,18 +60,19 @@ jobs:
         port: ${{ secrets.PORT }}
         password: ${{ secrets.PASSWD }}
         script: |
-          cd /opt/nodejs/Backend_apps
+          cd /opt/nodejs/Backend_app
           git pull
 
     - name: Remove inbound rule in security group
       run: |
         IP=${{ steps.get_ip.outputs.ip }}
-        echo "Removing ${IP}/32 from security group launch-wizard-68"
-        aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+        echo "Removing ${IP}/32 from security group sg-0d572d49cd9afca78"
+        aws ec2 revoke-security-group-ingress --group-id sg-0d572d49cd9afca78 --protocol tcp --port 22 --cidr ${IP}/32
 
     - name: Clean up AWS credentials
       run: rm -rf ~/.aws
 
     - name: Deployment complete message
-      run: echo "Deployment Completed. Please check the deployed changes on the development server!" 
+      run: echo "Deployment Completed. Please check the deployed changes on the development server!"
+ 
 
