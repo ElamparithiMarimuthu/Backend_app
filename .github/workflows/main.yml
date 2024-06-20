@@ -70,7 +70,7 @@ jobs:
         run: |
           IP=${{ steps.get_ip.outputs.ip }}
           echo "Revoking ${IP}/32 from security group launch-wizard-68"
-          aws ec2 revoke-security-group-ingress --group-name launch-wizard-68 --protocol tcp --port 22 --cidr ${IP}/32
+          aws ec2 revoke-security-group-ingress --group-id sg-0d572d49cd9afca78 --protocol tcp --port 22 --cidr ${IP}/32
           # Add debug output to verify the rule was revoked
           aws ec2 describe-security-groups --group-names launch-wizard-68 
 
